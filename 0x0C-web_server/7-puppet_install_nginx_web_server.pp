@@ -1,22 +1,25 @@
-# Install nginx webserver
+# Script to install nginx using puppet
 
-package { 'nginx':
-    ensure  => installed,
+package {'nginx':
+  ensure => 'present',
 }
 
-file_line { 'add-redirect-rule':
-  ensure  => present,
-  path    => '/etc/nginx/sites-available/default',
-  line    => 'rewrite ^ https://www.youtube.com/watch?v=QH2-TGUlwu4 permanent;',
-  after   => 'listen 80 default_server;',
+exec {'install':
+  command  => 'sudo apt-get update ; sudo apt-get -y install nginx',
+  provider => shell,
+
 }
 
-file { '/var/www/html/index.html':
-  ensure  => present,
-  content => 'Hello World!',
+exec {'Hello':
+  command  => 'echo "Hello World!" | sudo tee /var/www/html/index.html',
+  provider => shell,
 }
 
-service { 'nginx':
-    ensure  => running,
-    require => Package['nginx'],
+exec {'sudo sed -i "s/listen 80 default_server;/listen 80 default_server;\\n\\tlocation \/redirect_me {\\n\\t\\treturn 301 https:\/\/japhyl.tech\/;\\n\\t}/" /etc/nginx/sites-available/default':
+  provider => shell,
+}
+
+exec {'run':
+  command  => 'sudo service nginx restart',
+  provider => shell,
 }
